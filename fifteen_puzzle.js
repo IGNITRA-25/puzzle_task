@@ -112,3 +112,59 @@ if(p.gamePad){window.addEventListener('gamepadconnected',function(e){
         };update();
     });
 }
+// --- TIMER FEATURE WITH LOCALSTORAGE PERSISTENCE --- //
+const TOTAL_TIME = 30 * 60; // 30 minutes in seconds
+let timerElement = document.getElementById("timer");
+let timerInterval;
+
+// Check if we already have a stored end time
+let endTime = localStorage.getItem("puzzleEndTime");
+
+if (!endTime) {
+    // If first time opening, set a new end time
+    endTime = Date.now() + TOTAL_TIME * 1000;
+    localStorage.setItem("puzzleEndTime", endTime);
+} else {
+    endTime = parseInt(endTime);
+}
+
+function updateTimer() {
+    let remaining = Math.floor((endTime - Date.now()) / 1000);
+
+    if (remaining <= 0) {
+        clearInterval(timerInterval);
+        timerElement.textContent = "00:00";
+        autoSolvePuzzle();
+        return;
+    }
+
+    let minutes = Math.floor(remaining / 60);
+    let seconds = remaining % 60;
+    timerElement.textContent =
+        (minutes < 10 ? "0" : "") + minutes + ":" +
+        (seconds < 10 ? "0" : "") + seconds;
+}
+
+function autoSolvePuzzle() {
+    let count = 1;
+    for (let y = 0; y <= p.grid[1]; y++) {
+        for (let x = 0; x <= p.grid[0]; x++) {
+            if (count < o) {
+                m[y][x] = count;
+                let e = document.getElementById("slot" + count);
+                e.style.left = (x * size[0]) + "px";
+                e.style.top = (y * size[1]) + "px";
+                count++;
+            } else {
+                m[y][x] = 0;
+                freeslot = [y, x];
+            }
+        }
+    }
+    localStorage.removeItem("puzzleEndTime"); // reset for next session
+    setTimeout(() => { alert("⏰ Time’s up! Puzzle solved automatically."); }, 500);
+}
+
+// Start countdown immediately when page loads
+updateTimer();
+timerInterval = setInterval(updateTimer, 1000);
